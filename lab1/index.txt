@@ -1,0 +1,1 @@
+R	270115165041Z	261007165041Z	01	unknown	/C=PL/ST=mazowieckie/L=Siedlce/O=Uniwersytet w Siedlcach/OU=Instytut Informatyki/CN=Artur Gubanovich/emailAddress=artur.gubanovich.2@gmail.com

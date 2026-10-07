@@ -1,0 +1,90 @@
+# Konfiguracja OpenSSL - PBKSI, laboratorium 1
+# Artur Gubanovich
+
+HOME                    = .
+
+####################################################################
+[ ca ]
+default_ca              = moje_ca               # zad. 2a
+
+####################################################################
+[ moje_ca ]
+dir                     = .                     # zad. 2b - biezacy katalog
+certs                   = $dir/certs
+crl_dir                 = $dir/crl
+database                = $dir/index.txt
+new_certs_dir           = $dir/newcerts
+certificate             = $dir/cacert.pem
+serial                  = $dir/serial
+crlnumber               = $dir/crlnumber
+crl                     = $dir/crl/crl.pem
+private_key             = $dir/private/cakey.pem
+
+x509_extensions         = usr_cert
+crl_extensions          = crl_ext
+name_opt                = ca_default
+cert_opt                = ca_default
+
+default_days            = 100                   # zad. 2b - waznosc certyfikatu
+default_crl_days        = 20                    # zad. 2b - odstep miedzy listami CRL
+default_md              = sha256
+preserve                = no
+unique_subject          = yes
+
+policy                  = policy_match
+
+####################################################################
+[ policy_match ]                                # zad. 2c
+countryName             = match
+stateOrProvinceName     = match
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = supplied
+
+####################################################################
+[ req ]
+default_bits            = 2048
+default_keyfile         = privkey.pem
+default_md              = sha256
+distinguished_name      = req_distinguished_name
+attributes              = req_attributes
+x509_extensions         = v3_ca
+string_mask             = utf8only
+
+[ req_distinguished_name ]
+countryName                     = Kod kraju (podaj 2 litery)
+countryName_default             = PL            # zad. 2c
+countryName_min                 = 2
+countryName_max                 = 2
+stateOrProvinceName             = Nazwa wojewodztwa
+stateOrProvinceName_default     = mazowieckie   # zad. 2c
+localityName                    = Lokalizacja (np. miasto)
+0.organizationName              = Nazwa organizacji
+organizationalUnitName          = Nazwa jednostki
+commonName                      = Imie i nazwisko wlasciciela
+commonName_max                  = 64
+emailAddress                    = Adres skrzynki e-mail
+emailAddress_max                = 64
+
+[ req_attributes ]
+challengePassword               = Podaj haslo
+challengePassword_min           = 6             # zad. 2c - haslo min. 6 znakow
+challengePassword_max           = 20
+
+####################################################################
+[ usr_cert ]
+basicConstraints        = CA:FALSE              # zad. 2e
+nsComment               = "testowy certyfikat"  # zad. 2d
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid,issuer
+
+[ v3_ca ]
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid:always,issuer
+basicConstraints        = critical,CA:true
+keyUsage                = critical,keyCertSign,cRLSign
+
+[ crl_ext ]
+authorityKeyIdentifier  = keyid:always

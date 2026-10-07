@@ -1,0 +1,8 @@
+.idea/
+.DS_Store
+
+# klucze prywatne i materiały prowadzącego — nie do publicznego repo
+**/private/
+newkey*.pem
+*.p12
+lab_*.pdf

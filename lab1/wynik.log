@@ -1,0 +1,421 @@
+===== Zadanie 1a =====
+
+$ openssl version -a
+OpenSSL 3.6.2 7 Apr 2026 (Library: OpenSSL 3.6.2 7 Apr 2026)
+built on: Tue Apr  7 12:17:57 2026 UTC
+platform: darwin64-arm64-cc
+options:  bn(64,64)
+compiler: clang -fPIC -arch arm64 -O3 -Wall -DL_ENDIAN -DOPENSSL_PIC -D_REENTRANT -DOPENSSL_BUILDING_OPENSSL -DNDEBUG
+OPENSSLDIR: "/opt/homebrew/etc/openssl@3"
+ENGINESDIR: "/opt/homebrew/Cellar/openssl@3/3.6.2/lib/engines-3"
+MODULESDIR: "/opt/homebrew/Cellar/openssl@3/3.6.2/lib/ossl-modules"
+Seeding source: os-specific
+CPUINFO: OPENSSL_armcap=0x987d
+
+===== Zadanie 1b =====
+
+$ printf '%s' 'Artur Gubanovich' | openssl md5 > moje_dane.md5
+
+$ printf '%s' 'Artur Gubanovich' | openssl sha1 > moje_dane.sha
+
+$ cat moje_dane.md5 moje_dane.sha
+MD5(stdin)= a8c158a30aa5a3678e0da7cb62ba1d85
+SHA1(stdin)= 5d2b817aab6032c0ff1d71473fe4436fc45f46ed
+
+===== Zadanie 1c =====
+
+$ openssl rand -hex -out dane.key 256
+
+$ cat dane.key
+46c9dc1c98b51410848fbb549325492d17227d70981e6f1e805c01623512cb28ad5beb084daddaeace1cd6aeb6e5f183b26e59eb0e5f401e5ddf1f234b20584c8afeddec3ee80b1e60a51f644818a25ce32028d1e46c210fd55066d2c2e8bd6039d207ea0a2354d7838abc88c13e9ca8bd178f46b079609ce4a1e09cb5313f52e5e16a87d072a13ea3e141f8e89a9eb2cc826ea27d04c91dcdd6885de9b85c97348d18df0ccc1976d92b867e57e422f6a85b45a4c89b1236a5b5c2d356b9abbefe2477f880814fccdca30caa1355a4ff32ab4f6a8e337bc0c07adf542c033e0a08a116162ff247f614d2488d6e669dfb1db9ac843c26b890fccaaf6cab6e32d1
+
+$ printf '%s\n' 'Artur Gubanovich' > tekst.in
+
+$ openssl enc -aes-256-cbc -a -salt -pbkdf2 -in tekst.in -out tekst.out -pass file:dane.key
+
+$ cat tekst.out
+U2FsdGVkX1+zFK1TyiSH1GxCGoxE49cLilfbeH1Y7mErIhdafo+PMhvNA6m4tfM9
+
+===== Zadanie 1d =====
+
+$ openssl enc -aes-256-cbc -d -a -pbkdf2 -in tekst.out -out tekst.decrypt -pass file:dane.key
+
+$ cat tekst.decrypt
+Artur Gubanovich
+
+$ cmp tekst.in tekst.decrypt && echo 'pliki identyczne'
+pliki identyczne
+
+===== Zadanie 3a =====
+
+$ mkdir certs crl newcerts private
+
+$ chmod 700 private
+
+$ touch index.txt
+
+$ echo 01 > serial
+
+$ echo 01 > crlnumber
+
+$ ls -l
+total 424
+drwxr-xr-x@ 2 artur  staff      64 Oct  7 18:50 certs
+drwxr-xr-x@ 2 artur  staff      64 Oct  7 18:50 crl
+-rw-r--r--@ 1 artur  staff       3 Oct  7 18:50 crlnumber
+-rw-r--r--@ 1 artur  staff     513 Oct  7 18:50 dane.key
+-rw-r--r--@ 1 artur  staff       0 Oct  7 18:50 index.txt
+-rw-r--r--@ 1 artur  staff  172571 Oct  7 18:30 lab_01_PBKSI.pdf
+-rw-r--r--@ 1 artur  staff      45 Oct  7 18:50 moje_dane.md5
+-rw-r--r--@ 1 artur  staff      54 Oct  7 18:50 moje_dane.sha
+drwxr-xr-x@ 2 artur  staff      64 Oct  7 18:50 newcerts
+-rw-r--r--@ 1 artur  staff    3273 Oct  7 18:49 openssl.cnf
+drwx------@ 2 artur  staff      64 Oct  7 18:50 private
+-rw-r--r--@ 1 artur  staff       3 Oct  7 18:50 serial
+-rw-r--r--@ 1 artur  staff      17 Oct  7 18:50 tekst.decrypt
+-rw-r--r--@ 1 artur  staff      17 Oct  7 18:50 tekst.in
+-rw-r--r--@ 1 artur  staff      65 Oct  7 18:50 tekst.out
+-rw-r--r--@ 1 artur  staff    2029 Oct  7 18:50 wynik.log
+
+===== Zadanie 3b =====
+
+$ openssl genrsa -out private/cakey.pem 4096
+
+$ openssl rsa -in private/cakey.pem -out private/cakey.pem -outform PEM -des3 -passout pass:uwsii
+writing RSA key
+
+$ head -n 3 private/cakey.pem
+-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIJpDBWBgkqhkiG9w0BBQ0wSTAxBgkqhkiG9w0BBQwwJAQQp1wQsJx8+G7IIFSa
+/FLYcQICCAAwDAYIKoZIhvcNAgkFADAUBggqhkiG9w0DBwQIJnGhD9ETzVoEgglI
+
+$ openssl rsa -in private/cakey.pem -passin pass:uwsii -noout -text | head -n 1
+Private-Key: (4096 bit, 2 primes)
+
+===== Zadanie 3c =====
+
+$ openssl req -new -x509 -days 730 -key private/cakey.pem -passin pass:uwsii -out cacert.pem -subj '/C=PL/ST=mazowieckie/L=Siedlce/O=Uniwersytet w Siedlcach/OU=Instytut Informatyki/CN=Moje CA/emailAddress=artur.gubanovich.2@gmail.com'
+
+$ openssl x509 -in cacert.pem -noout -subject -issuer -dates -ext basicConstraints,keyUsage
+subject=C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Moje CA, emailAddress=artur.gubanovich.2@gmail.com
+issuer=C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Moje CA, emailAddress=artur.gubanovich.2@gmail.com
+notBefore=Oct  7 16:50:31 2026 GMT
+notAfter=Oct  6 16:50:31 2028 GMT
+X509v3 Basic Constraints: critical
+    CA:TRUE
+X509v3 Key Usage: critical
+    Certificate Sign, CRL Sign
+
+===== Zadanie 4a =====
+(proba z haslem challengePassword krotszym niz 6 znakow)
+
+$ printf '\n\nSiedlce\nUniwersytet w Siedlcach\nInstytut Informatyki\nArtur Gubanovich\nartur.gubanovich.2@gmail.com\nuwsii\n' | openssl req -new -keyout zle_haslo.key -out zle_haslo.req -passout pass:uwsii
+.............+.+...+...+...+..+...+.......+...+......+++++++++++++++++++++++++++++++++++++++*.....+.............+...+........+....+..+...+...+............+++++++++++++++++++++++++++++++++++++++*......+...+..+...+.............+..............+.......+...+............+........+...+...+.+......+...+.................+..........+..+..........+...........+......+..........+.........+.........+...+..+...+.......+......+..............+.+..+....+......+....................+.........+.+.....+..................+....+...+...+...........................+..+...+..........+..+............+.........+....+.....+.+...........+...+...+..........+..+...+....+......+..+......+......+.+..+...+......................+...+...+...........+...+.......+...+..+....+......+.........+..+.......+......+.................+.........+.+.....+...+.+...+..+..................+.......+.....+....+.....+...............+.+......+...+.....+......+.............+..+.+.....+....+......+............+...+...+......+...+...............+...+..+......+....+..+...+......+.........+.+.....+.+...+...........+............+...+......+.............+......+..............+.+..+..........+..+.+...........+..................+......++++++
+.+...+.....+.............+............+......+.........+..+...+......+.......+..+.+.....+....+...+........+......+....+......+++++++++++++++++++++++++++++++++++++++*..........+++++++++++++++++++++++++++++++++++++++*.....+.....+....+.....+......+.......+...+.....+...+.+.....+...+......+......+....+..+....+...+.....+................+.........+..+.+...+..............+.......+.........+......+........+......+......+...+......+.......+..+...+.............+..+..........+............+..+......+....+...+.....+............+...+......+..........+..+..........+.........+.........+...........+...+...+.........+....+......+...........+..........+..............+.+..+...+.........+......+.......+..+......+...+....+..+....+...........+....+..+....+......+..+.......+.....+.+..+.+.....+.........+......+.+...+...+............++++++
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Kod kraju (podaj 2 litery) [PL]:Nazwa wojewodztwa [mazowieckie]:Lokalizacja (np. miasto) []:Nazwa organizacji []:Nazwa jednostki []:Imie i nazwisko wlasciciela []:Adres skrzynki e-mail []:
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+Podaj haslo []:String too short, must be at least 6 bytes long
+Podaj haslo []:Error making certificate request
+[kod wyjscia: 1]
+
+$ ls zle_haslo.req
+ls: zle_haslo.req: No such file or directory
+[kod wyjscia: 1]
+
+(wlasciwe zgloszenie; puste odpowiedzi = wartosci domyslne)
+
+$ printf '\n\nSiedlce\nUniwersytet w Siedlcach\nInstytut Informatyki\nArtur Gubanovich\nartur.gubanovich.2@gmail.com\nuwsii2026\n' | openssl req -new -keyout newkey01.pem -out moje_req01.req -passout pass:uwsii
+........+.......+......+............+...+..+............+...+.+.....+.+...+...+..+.+..+.........+.+........+..........+..+.......+..+..........+...+..+.............+......+++++++++++++++++++++++++++++++++++++++*.....+.+..+.+...........+.+..+.+..+.........+......+...+....+......+++++++++++++++++++++++++++++++++++++++*..+...+......+.........+.+.........+...........+....+......+..+.......+..+..................+...+...+....+...+...+..+....+...+..+...+.+.....+.+.....+......+...+.+.....+.........+.......+...............+...+..+....+.....+..........+......+...+.....+......+....+...............+..+.......+........+....+...+...+............+..+.+..............+......+..........+..+.+.........+...+..+......+.+........+......+........................................+.........+...........+.+........+......+.+...............+...........+....+...............+.....+....+..+...+.........+.+..............+.+............+.....+.........+....+..............+.+.....+......+.+....................+...................+.....+...+.+..+....+...+...........+.....................+.+..+.+.....+....+...+..+..............................+............+.........+.+......+..+..........+...+........+.+.........+......+...+..+..........+.........+.........+...............+..+....+.........+.....+.+..+...+......+.+..............+.+........+......+...+......+.+...+..+.+...+.....+.......+..+..........+........+.......+...+..+...+.........+....+..............+...+.........+...+......+.+.........+............+.....+....+...+..+..................+......+....+......++++++
+..........+..+.+...+.....+.........+++++++++++++++++++++++++++++++++++++++*.+...+.+.....+.........+............+...+....+.....+++++++++++++++++++++++++++++++++++++++*......+..+...+.......+.....+.......+..+.+....................+.........++++++
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Kod kraju (podaj 2 litery) [PL]:Nazwa wojewodztwa [mazowieckie]:Lokalizacja (np. miasto) []:Nazwa organizacji []:Nazwa jednostki []:Imie i nazwisko wlasciciela []:Adres skrzynki e-mail []:
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+Podaj haslo []:
+$ openssl req -in moje_req01.req -noout -verify -subject
+Certificate request self-signature verify OK
+subject=C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Artur Gubanovich, emailAddress=artur.gubanovich.2@gmail.com
+
+$ openssl req -in moje_req01.req -noout -text | grep challengePassword
+            challengePassword        :uwsii2026
+
+===== Zadanie 4b =====
+
+$ openssl ca -batch -in moje_req01.req -passin pass:uwsii
+Using configuration from /Users/artur/education/magisterka/PBKSI/lab1/openssl.cnf
+Check that the request matches the signature
+Signature ok
+Certificate Details:
+        Serial Number: 1 (0x1)
+        Validity
+            Not Before: Oct  7 16:50:41 2026 GMT
+            Not After : Jan 15 16:50:41 2027 GMT
+        Subject:
+            countryName               = PL
+            stateOrProvinceName       = mazowieckie
+            localityName              = Siedlce
+            organizationName          = Uniwersytet w Siedlcach
+            organizationalUnitName    = Instytut Informatyki
+            commonName                = Artur Gubanovich
+            emailAddress              = artur.gubanovich.2@gmail.com
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                testowy certyfikat
+            X509v3 Subject Key Identifier: 
+                CF:46:FB:0F:6E:E0:C3:4C:6C:DD:16:FB:2A:A4:F9:47:36:59:D0:FA
+            X509v3 Authority Key Identifier: 
+                22:2D:AE:90:83:2C:7C:5E:6E:16:D9:07:B7:57:3A:AD:BA:11:4D:68
+Certificate is to be certified until Jan 15 16:50:41 2027 GMT (100 days)
+
+Write out database with 1 new entries
+Database updated
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Moje CA/emailAddress=artur.gubanovich.2@gmail.com
+        Validity
+            Not Before: Oct  7 16:50:41 2026 GMT
+            Not After : Jan 15 16:50:41 2027 GMT
+        Subject: C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Artur Gubanovich/emailAddress=artur.gubanovich.2@gmail.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:a7:3f:21:99:82:18:44:fd:6e:ec:bc:82:5b:b4:
+                    1c:fa:04:70:a4:ed:67:2a:08:2d:c7:aa:7f:ff:8a:
+                    98:55:70:9e:98:ef:02:f5:e1:2c:60:36:73:cc:da:
+                    b9:ce:e3:1c:07:a3:f6:6c:24:13:61:7f:7b:cd:93:
+                    2e:e5:f7:e3:e6:dc:43:8c:17:8a:dc:90:36:05:b3:
+                    29:52:db:7e:77:97:ab:53:c9:44:7c:63:7d:96:e0:
+                    df:2f:dd:b4:7f:b3:2c:0b:7c:16:8c:bd:b8:2c:b1:
+                    fa:67:80:b4:21:d8:da:3d:30:ed:49:50:a1:bf:9a:
+                    87:17:49:15:9d:c0:24:f6:04:1e:fa:75:3a:4b:cf:
+                    05:ae:71:f9:15:17:7b:35:f1:41:e0:57:bc:f9:c0:
+                    24:27:d3:4e:a5:ee:fd:c9:9d:b4:b8:f8:b7:ae:36:
+                    de:fc:ce:24:41:4f:21:01:30:08:e8:7c:eb:74:10:
+                    0e:5d:25:02:70:9c:2b:1c:bd:55:61:a8:cd:b8:2e:
+                    98:c2:dc:0a:7d:5f:fd:89:ee:44:a6:ec:d9:90:15:
+                    19:db:01:79:0d:a6:de:76:67:b9:0e:8f:1b:bf:8a:
+                    c1:0d:cb:21:f7:2c:56:3e:82:7a:e5:e7:f1:0c:15:
+                    59:16:77:ea:bc:0a:40:08:23:7a:8c:91:d1:fc:a6:
+                    44:7f
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                testowy certyfikat
+            X509v3 Subject Key Identifier: 
+                CF:46:FB:0F:6E:E0:C3:4C:6C:DD:16:FB:2A:A4:F9:47:36:59:D0:FA
+            X509v3 Authority Key Identifier: 
+                22:2D:AE:90:83:2C:7C:5E:6E:16:D9:07:B7:57:3A:AD:BA:11:4D:68
+    Signature Algorithm: sha256WithRSAEncryption
+    Signature Value:
+        75:4b:d7:6c:9e:f4:0f:3a:fa:f6:d2:a4:12:ee:76:77:94:b9:
+        6a:fc:f8:66:78:70:29:54:55:d6:c0:89:91:1b:a1:aa:d3:be:
+        4a:a5:d2:8d:3a:6c:7b:e8:d5:23:9b:fc:4b:15:78:fe:d1:64:
+        e5:16:44:9a:ad:ec:f8:fd:48:76:21:4e:84:4f:f9:d8:38:0a:
+        f7:da:fc:0f:59:78:65:f2:d3:1b:d2:cb:b3:f2:db:bf:c9:34:
+        0e:47:4f:b3:48:96:08:19:54:0b:d0:2b:4c:49:a4:f7:e1:1e:
+        1e:ad:45:ba:f4:12:06:25:53:75:75:5c:07:4b:15:cc:90:44:
+        03:e5:c3:a5:34:ac:45:81:f1:ed:b1:73:b6:11:c0:a1:ab:ac:
+        38:d2:af:c1:64:16:2e:58:09:c8:ab:c5:96:33:07:ed:ae:54:
+        32:31:8f:2d:b0:2d:1e:91:ad:c1:7b:d6:4e:24:66:ff:75:7e:
+        47:94:be:d8:5d:e2:44:c1:04:43:a9:d8:f7:b9:ce:21:b2:f2:
+        65:c9:83:a8:97:f4:46:84:4f:3e:2f:f7:a6:ed:aa:95:2e:ec:
+        54:e0:33:6c:ef:88:a7:94:83:fd:66:f5:96:01:99:8b:38:6b:
+        69:11:b0:dc:48:e7:67:dc:4e:be:08:68:8a:87:82:30:22:70:
+        30:22:2a:7e:14:5a:26:b5:c7:3e:e5:28:c0:eb:a8:cb:f3:10:
+        e8:cf:11:49:53:62:f5:39:51:9c:8b:c0:cb:27:92:c7:e3:d9:
+        60:33:f9:dd:20:4c:29:8b:10:4b:4f:d5:7d:74:44:87:59:fa:
+        28:5e:0f:1e:3d:8f:6e:e7:ea:4e:50:e4:06:13:14:a8:93:9b:
+        82:8f:a0:61:b8:ec:ee:9b:df:b5:69:e1:ec:e6:d6:72:6d:17:
+        af:00:fe:ab:df:42:ff:81:84:4d:22:7a:2a:c9:4f:8b:b8:2e:
+        1c:bc:c5:5e:45:f7:42:37:b4:e8:ed:53:97:6e:6f:70:92:62:
+        b0:9b:0d:df:2b:6a:87:8f:2c:3f:df:f0:26:e2:f1:a4:97:26:
+        4e:a2:23:8c:14:85:84:0c:1b:96:27:40:61:d2:48:63:cb:70:
+        22:cb:15:54:a9:ca:c0:aa:21:74:81:4f:9e:3a:b7:2e:9a:6d:
+        6f:d3:82:d0:93:9f:2e:85:5b:65:29:67:fe:97:99:1a:91:e3:
+        7d:47:cc:5d:f0:58:fc:ea:fd:02:25:ff:c2:31:68:5f:e3:73:
+        86:9d:55:39:85:e0:d3:9c:09:5a:b0:a1:a5:33:ec:ad:85:e8:
+        a9:aa:b9:f4:8f:e9:84:1e:75:f3:81:43:bd:6d:01:5c:10:fb:
+        c6:5c:07:97:52:e4:2e:9e
+-----BEGIN CERTIFICATE-----
+MIIFYDCCA0igAwIBAgIBATANBgkqhkiG9w0BAQsFADCBtTELMAkGA1UEBhMCUEwx
+FDASBgNVBAgMC21hem93aWVja2llMRAwDgYDVQQHDAdTaWVkbGNlMSAwHgYDVQQK
+DBdVbml3ZXJzeXRldCB3IFNpZWRsY2FjaDEdMBsGA1UECwwUSW5zdHl0dXQgSW5m
+b3JtYXR5a2kxEDAOBgNVBAMMB01vamUgQ0ExKzApBgkqhkiG9w0BCQEWHGFydHVy
+Lmd1YmFub3ZpY2guMkBnbWFpbC5jb20wHhcNMjYxMDA3MTY1MDQxWhcNMjcwMTE1
+MTY1MDQxWjCBvjELMAkGA1UEBhMCUEwxFDASBgNVBAgMC21hem93aWVja2llMRAw
+DgYDVQQHDAdTaWVkbGNlMSAwHgYDVQQKDBdVbml3ZXJzeXRldCB3IFNpZWRsY2Fj
+aDEdMBsGA1UECwwUSW5zdHl0dXQgSW5mb3JtYXR5a2kxGTAXBgNVBAMMEEFydHVy
+IEd1YmFub3ZpY2gxKzApBgkqhkiG9w0BCQEWHGFydHVyLmd1YmFub3ZpY2guMkBn
+bWFpbC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCnPyGZghhE
+/W7svIJbtBz6BHCk7WcqCC3Hqn//iphVcJ6Y7wL14SxgNnPM2rnO4xwHo/ZsJBNh
+f3vNky7l9+Pm3EOMF4rckDYFsylS2353l6tTyUR8Y32W4N8v3bR/sywLfBaMvbgs
+sfpngLQh2No9MO1JUKG/mocXSRWdwCT2BB76dTpLzwWucfkVF3s18UHgV7z5wCQn
+006l7v3JnbS4+LeuNt78ziRBTyEBMAjofOt0EA5dJQJwnCscvVVhqM24LpjC3Ap9
+X/2J7kSm7NmQFRnbAXkNpt52Z7kOjxu/isENyyH3LFY+gnrl5/EMFVkWd+q8CkAI
+I3qMkdH8pkR/AgMBAAGjcDBuMAkGA1UdEwQCMAAwIQYJYIZIAYb4QgENBBQWEnRl
+c3Rvd3kgY2VydHlmaWthdDAdBgNVHQ4EFgQUz0b7D27gw0xs3Rb7KqT5RzZZ0Pow
+HwYDVR0jBBgwFoAUIi2ukIMsfF5uFtkHt1c6rboRTWgwDQYJKoZIhvcNAQELBQAD
+ggIBAHVL12ye9A86+vbSpBLudneUuWr8+GZ4cClUVdbAiZEboarTvkql0o06bHvo
+1SOb/EsVeP7RZOUWRJqt7Pj9SHYhToRP+dg4Cvfa/A9ZeGXy0xvSy7Py27/JNA5H
+T7NIlggZVAvQK0xJpPfhHh6tRbr0EgYlU3V1XAdLFcyQRAPlw6U0rEWB8e2xc7YR
+wKGrrDjSr8FkFi5YCcirxZYzB+2uVDIxjy2wLR6RrcF71k4kZv91fkeUvthd4kTB
+BEOp2Pe5ziGy8mXJg6iX9EaETz4v96btqpUu7FTgM2zviKeUg/1m9ZYBmYs4a2kR
+sNxI52fcTr4IaIqHgjAicDAiKn4UWia1xz7lKMDrqMvzEOjPEUlTYvU5UZyLwMsn
+ksfj2WAz+d0gTCmLEEtP1X10RIdZ+iheDx49j27n6k5Q5AYTFKiTm4KPoGG47O6b
+37Vp4ezm1nJtF68A/qvfQv+BhE0ieirJT4u4Lhy8xV5F90I3tOjtU5dub3CSYrCb
+Dd8raoePLD/f8Cbi8aSXJk6iI4wUhYQMG5YnQGHSSGPLcCLLFVSpysCqIXSBT546
+ty6abW/TgtCTny6FW2UpZ/6XmRqR431HzF3wWPzq/QIl/8IxaF/jc4adVTmF4NOc
+CVqwoaUz7K2F6KmqufSP6YQedfOBQ71tAVwQ+8ZcB5dS5C6e
+-----END CERTIFICATE-----
+
+$ ls -l newcerts
+total 16
+-rw-r--r--@ 1 artur  staff  6088 Oct  7 18:50 01.pem
+
+$ openssl x509 -in newcerts/01.pem -noout -subject -issuer -dates -ext basicConstraints,nsComment
+subject=C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Artur Gubanovich, emailAddress=artur.gubanovich.2@gmail.com
+issuer=C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Moje CA, emailAddress=artur.gubanovich.2@gmail.com
+notBefore=Oct  7 16:50:41 2026 GMT
+notAfter=Jan 15 16:50:41 2027 GMT
+X509v3 Basic Constraints: 
+    CA:FALSE
+Netscape Comment: 
+    testowy certyfikat
+
+$ openssl verify -CAfile cacert.pem newcerts/01.pem
+newcerts/01.pem: OK
+
+===== Zadanie 4c =====
+
+$ cat serial
+02
+
+$ cat index.txt
+V	270115165041Z		01	unknown	/C=PL/ST=mazowieckie/L=Siedlce/O=Uniwersytet w Siedlcach/OU=Instytut Informatyki/CN=Artur Gubanovich/emailAddress=artur.gubanovich.2@gmail.com
+
+$ cat index.txt.attr
+unique_subject = yes
+
+===== Zadanie 4d =====
+
+$ openssl ca -batch -in moje_req01.req -passin pass:uwsii
+Using configuration from /Users/artur/education/magisterka/PBKSI/lab1/openssl.cnf
+Check that the request matches the signature
+Signature ok
+ERROR:There is already a certificate for /C=PL/ST=mazowieckie/L=Siedlce/O=Uniwersytet w Siedlcach/OU=Instytut Informatyki/CN=Artur Gubanovich/emailAddress=artur.gubanovich.2@gmail.com
+The matching entry has the following details
+Type          :Valid
+Expires on    :270115165041Z
+Serial Number :01
+File name     :unknown
+Subject Name  :/C=PL/ST=mazowieckie/L=Siedlce/O=Uniwersytet w Siedlcach/OU=Instytut Informatyki/CN=Artur Gubanovich/emailAddress=artur.gubanovich.2@gmail.com
+[kod wyjscia: 1]
+
+$ cat serial; cat index.txt; ls newcerts
+02
+V	270115165041Z		01	unknown	/C=PL/ST=mazowieckie/L=Siedlce/O=Uniwersytet w Siedlcach/OU=Instytut Informatyki/CN=Artur Gubanovich/emailAddress=artur.gubanovich.2@gmail.com
+01.pem
+
+===== Zadanie 5e =====
+
+$ openssl ca -gencrl -out crl/lista_1.crl -passin pass:uwsii
+Using configuration from /Users/artur/education/magisterka/PBKSI/lab1/openssl.cnf
+
+$ openssl crl -in crl/lista_1.crl -noout -text | head -n 12
+Certificate Revocation List (CRL):
+    Version 2 (0x1)
+    Signature Algorithm: sha256WithRSAEncryption
+    Issuer: C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Moje CA, emailAddress=artur.gubanovich.2@gmail.com
+    Last Update: Oct  7 16:50:41 2026 GMT
+    Next Update: Oct 27 16:50:41 2026 GMT
+    CRL extensions:
+        X509v3 Authority Key Identifier: 
+            22:2D:AE:90:83:2C:7C:5E:6E:16:D9:07:B7:57:3A:AD:BA:11:4D:68
+        X509v3 CRL Number: 
+            1
+No Revoked Certificates.
+
+===== Zadanie 5f =====
+
+$ openssl ca -revoke newcerts/01.pem -passin pass:uwsii
+Using configuration from /Users/artur/education/magisterka/PBKSI/lab1/openssl.cnf
+Revoking Certificate 01.
+Database updated
+
+$ cat index.txt
+R	270115165041Z	261007165041Z	01	unknown	/C=PL/ST=mazowieckie/L=Siedlce/O=Uniwersytet w Siedlcach/OU=Instytut Informatyki/CN=Artur Gubanovich/emailAddress=artur.gubanovich.2@gmail.com
+
+===== Zadanie 5g =====
+
+$ openssl ca -gencrl -crldays 10 -crlhours 12 -out crl/lista_2.crl -passin pass:uwsii
+Using configuration from /Users/artur/education/magisterka/PBKSI/lab1/openssl.cnf
+
+$ openssl crl -in crl/lista_2.crl -noout -text | head -n 16
+Certificate Revocation List (CRL):
+    Version 2 (0x1)
+    Signature Algorithm: sha256WithRSAEncryption
+    Issuer: C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Moje CA, emailAddress=artur.gubanovich.2@gmail.com
+    Last Update: Oct  7 16:50:41 2026 GMT
+    Next Update: Oct 18 04:50:41 2026 GMT
+    CRL extensions:
+        X509v3 Authority Key Identifier: 
+            22:2D:AE:90:83:2C:7C:5E:6E:16:D9:07:B7:57:3A:AD:BA:11:4D:68
+        X509v3 CRL Number: 
+            2
+Revoked Certificates:
+    Serial Number: 01
+        Revocation Date: Oct  7 16:50:41 2026 GMT
+    Signature Algorithm: sha256WithRSAEncryption
+    Signature Value:
+
+$ openssl crl -in crl/lista_2.crl -noout -lastupdate -nextupdate
+lastUpdate=Oct  7 16:50:41 2026 GMT
+nextUpdate=Oct 18 04:50:41 2026 GMT
+
+$ openssl verify -crl_check -CAfile cacert.pem -CRLfile crl/lista_2.crl newcerts/01.pem
+C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Artur Gubanovich, emailAddress=artur.gubanovich.2@gmail.com
+error 23 at 0 depth lookup: certificate revoked
+error newcerts/01.pem: verification failed
+[kod wyjscia: 2]
+
+===== Zadanie 6a =====
+
+$ openssl pkcs12 -export -in newcerts/01.pem -inkey newkey01.pem -certfile cacert.pem -name 'Artur Gubanovich' -out 01.p12 -passin pass:uwsii -passout pass:uwsii
+
+$ openssl pkcs12 -in 01.p12 -passin pass:uwsii -nokeys -info 2>&1 | grep -E 'MAC|PKCS7|subject=|issuer='
+MAC: sha256, Iteration 2048
+MAC length: 32, salt length: 16
+PKCS7 Encrypted data: PBES2, PBKDF2, AES-256-CBC, Iteration 2048, PRF hmacWithSHA256
+PKCS7 Data
+subject=C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Artur Gubanovich, emailAddress=artur.gubanovich.2@gmail.com
+issuer=C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Moje CA, emailAddress=artur.gubanovich.2@gmail.com
+subject=C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Moje CA, emailAddress=artur.gubanovich.2@gmail.com
+issuer=C=PL, ST=mazowieckie, L=Siedlce, O=Uniwersytet w Siedlcach, OU=Instytut Informatyki, CN=Moje CA, emailAddress=artur.gubanovich.2@gmail.com
+
+$ ls -l 01.p12 cacert.pem
+-rw-------@ 1 artur  staff  4924 Oct  7 18:50 01.p12
+-rw-r--r--@ 1 artur  staff  2269 Oct  7 18:50 cacert.pem

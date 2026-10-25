@@ -1,0 +1,81 @@
+OpenSSH_9.2p1 Debian-2+deb12u10, OpenSSL 3.0.22 25 Aug 2026
+debug1: Reading configuration data /etc/ssh/ssh_config
+debug1: Reading configuration data /etc/ssh/ssh_config.d/kerberos.conf
+debug1: /etc/ssh/ssh_config.d/kerberos.conf line 1: Applying options for *
+debug1: /etc/ssh/ssh_config line 21: Applying options for *
+debug1: Connecting to kerberos.uws.edu.pl [172.21.0.2] port 22.
+debug1: Connection established.
+debug1: identity file /root/.ssh/id_rsa type -1
+debug1: identity file /root/.ssh/id_rsa-cert type -1
+debug1: identity file /root/.ssh/id_ecdsa type -1
+debug1: identity file /root/.ssh/id_ecdsa-cert type -1
+debug1: identity file /root/.ssh/id_ecdsa_sk type -1
+debug1: identity file /root/.ssh/id_ecdsa_sk-cert type -1
+debug1: identity file /root/.ssh/id_ed25519 type -1
+debug1: identity file /root/.ssh/id_ed25519-cert type -1
+debug1: identity file /root/.ssh/id_ed25519_sk type -1
+debug1: identity file /root/.ssh/id_ed25519_sk-cert type -1
+debug1: identity file /root/.ssh/id_xmss type -1
+debug1: identity file /root/.ssh/id_xmss-cert type -1
+debug1: identity file /root/.ssh/id_dsa type -1
+debug1: identity file /root/.ssh/id_dsa-cert type -1
+debug1: Local version string SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u10
+debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
+debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
+debug1: Authenticating to kerberos.uws.edu.pl:22 as 'student'
+debug1: load_hostkeys: fopen /root/.ssh/known_hosts2: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+debug1: Offering GSSAPI proposal: gss-group14-sha256-toWM5Slw5Ew8Mqkay+al2g==,gss-group16-sha512-toWM5Slw5Ew8Mqkay+al2g==,gss-nistp256-sha256-toWM5Slw5Ew8Mqkay+al2g==,gss-curve25519-sha256-toWM5Slw5Ew8Mqkay+al2g==,gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==,gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==,gss-group14-sha256-eipGX3TCiQSrx573bT1o1Q==,gss-group16-sha512-eipGX3TCiQSrx573bT1o1Q==,gss-nistp256-sha256-eipGX3TCiQSrx573bT1o1Q==,gss-curve25519-sha256-eipGX3TCiQSrx573bT1o1Q==,gss-group14-sha1-eipGX3TCiQSrx573bT1o1Q==,gss-gex-sha1-eipGX3TCiQSrx573bT1o1Q==
+debug1: SSH2_MSG_KEXINIT sent
+debug1: SSH2_MSG_KEXINIT received
+debug1: kex: algorithm: gss-group14-sha256-toWM5Slw5Ew8Mqkay+al2g==
+debug1: kex: host key algorithm: ssh-ed25519
+debug1: kex: server->client cipher: chacha20-poly1305@openssh.com MAC: <implicit> compression: none
+debug1: kex: client->server cipher: chacha20-poly1305@openssh.com MAC: <implicit> compression: none
+debug1: Calling gss_init_sec_context
+debug1: Received GSSAPI_COMPLETE
+debug1: Calling gss_init_sec_context
+debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+debug1: rekey out after 134217728 blocks
+debug1: SSH2_MSG_NEWKEYS sent
+debug1: expecting SSH2_MSG_NEWKEYS
+debug1: ssh_packet_read_poll2: resetting read seqnr 3
+debug1: SSH2_MSG_NEWKEYS received
+debug1: rekey in after 134217728 blocks
+debug1: Will attempt key: /root/.ssh/id_rsa 
+debug1: Will attempt key: /root/.ssh/id_ecdsa 
+debug1: Will attempt key: /root/.ssh/id_ecdsa_sk 
+debug1: Will attempt key: /root/.ssh/id_ed25519 
+debug1: Will attempt key: /root/.ssh/id_ed25519_sk 
+debug1: Will attempt key: /root/.ssh/id_xmss 
+debug1: Will attempt key: /root/.ssh/id_dsa 
+debug1: SSH2_MSG_EXT_INFO received
+debug1: kex_input_ext_info: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
+debug1: kex_input_ext_info: publickey-hostbound@openssh.com=<0>
+debug1: SSH2_MSG_SERVICE_ACCEPT received
+debug1: Authentications that can continue: publickey,gssapi-keyex,gssapi-with-mic,password
+debug1: Next authentication method: gssapi-keyex
+Authenticated to kerberos.uws.edu.pl ([172.21.0.2]:22) using "gssapi-keyex".
+debug1: channel 0: new session [client-session] (inactive timeout: 0)
+debug1: Requesting no-more-sessions@openssh.com
+debug1: Entering interactive session.
+debug1: pledge: filesystem
+debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
+debug1: client_input_hostkeys: searching /root/.ssh/known_hosts for kerberos.uws.edu.pl / (none)
+debug1: client_input_hostkeys: searching /root/.ssh/known_hosts2 for kerberos.uws.edu.pl / (none)
+debug1: client_input_hostkeys: hostkeys file /root/.ssh/known_hosts2 does not exist
+debug1: Sending environment.
+debug1: Sending command: whoami; hostname -f
+Learned new hostkey: RSA SHA256:f6BLnvA85YoPFKz2i+1YKs79OALtf3O85yRNwHKRmC0
+Learned new hostkey: ECDSA SHA256:UxoAdLzKWAH5l3bGUr+W6kmbeZOykjptUZu/v6P/rVw
+Adding new key for kerberos.uws.edu.pl to /root/.ssh/known_hosts: ssh-rsa SHA256:f6BLnvA85YoPFKz2i+1YKs79OALtf3O85yRNwHKRmC0
+Adding new key for kerberos.uws.edu.pl to /root/.ssh/known_hosts: ecdsa-sha2-nistp256 SHA256:UxoAdLzKWAH5l3bGUr+W6kmbeZOykjptUZu/v6P/rVw
+debug1: update_known_hosts: known hosts file /root/.ssh/known_hosts2 does not exist
+debug1: pledge: fork
+debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+debug1: client_input_channel_req: channel 0 rtype eow@openssh.com reply 0
+debug1: channel 0: free: client-session, nchannels 1
+Transferred: sent 4068, received 3668 bytes, in 0.0 seconds
+Bytes per second: sent 309475.2, received 279045.0
+debug1: Exit status 0

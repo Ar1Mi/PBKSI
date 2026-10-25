@@ -1,0 +1,350 @@
+
+
+===== Zadanie 1. Instalacja serwera =====
+
+root@kerberos:~# hostname; hostname -f; cat /etc/hostname; grep kerberos /etc/hosts
+kerberos.uws.edu.pl
+kerberos.uws.edu.pl
+kerberos.uws.edu.pl
+172.21.0.2	kerberos.uws.edu.pl kerberos
+
+root@kerberos:~# apt-get update -qq
+
+root@kerberos:~# cat <<EOF | debconf-set-selections
+krb5-config krb5-config/default_realm string REALM.KB.UWS.EDU.PL
+krb5-config krb5-config/kerberos_servers string kerberos.uws.edu.pl
+krb5-config krb5-config/admin_server string kerberos.uws.edu.pl
+krb5-config krb5-config/add_servers_realm string REALM.KB.UWS.EDU.PL
+krb5-config krb5-config/add_servers boolean true
+krb5-config krb5-config/read_conf boolean true
+EOF
+
+root@kerberos:~# DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o=Dpkg::Use-Pty=0 ntp krb5-kdc krb5-admin-server openssh-server >/tmp/apt.log 2>&1; echo "apt: kod $?"; dpkg -l ntp ntpsec krb5-kdc krb5-admin-server openssh-server | tail -5
+apt: kod 0
+ii  krb5-admin-server 1.20.1-2+deb12u5                        arm64        MIT Kerberos master server (kadmind)
+ii  krb5-kdc          1.20.1-2+deb12u5                        arm64        MIT Kerberos key server (KDC)
+ii  ntp               1:4.2.8p15+dfsg-2~1.2.2+dfsg1-1+deb12u1 all          Network Time Protocol daemon/utilities (transitional package)
+ii  ntpsec            1.2.2+dfsg1-1+deb12u1                   arm64        Network Time Protocol daemon and utility programs
+ii  openssh-server    1:9.2p1-2+deb12u10                      arm64        secure shell (SSH) server, for secure access from remote machines
+
+root@kerberos:~# service ntpsec start; sleep 3; service ntpsec status
+Starting NTP server: ntpd2026-10-25T09:23:23 ntpd[4278]: INIT: ntpd ntpsec-1.2.2: Starting
+2026-10-25T09:23:23 ntpd[4278]: INIT: Command line: /usr/sbin/ntpd -p /run/ntpd.pid -c /etc/ntpsec/ntp.conf -g -N -u ntpsec:ntpsec
+.
+NTP server is running.
+
+root@kerberos:~# date
+Sun Oct 25 09:23:27 UTC 2026
+
+
+===== Zadanie 2. Konfiguracja serwera =====
+
+root@kerberos:~# cp /lab/etc/krb5.conf /etc/krb5.conf && cat /etc/krb5.conf
+[libdefaults]
+        default_realm = REALM.KB.UWS.EDU.PL
+        rdns = false
+        dns_lookup_kdc = false
+        dns_lookup_realm = false
+        forwardable = true
+
+[realms]
+        REALM.KB.UWS.EDU.PL = {
+                kdc = kerberos.uws.edu.pl
+                admin_server = kerberos.uws.edu.pl
+        }
+
+[domain_realm]
+        kerberos.uws.edu.pl = REALM.KB.UWS.EDU.PL
+        .uws.edu.pl = REALM.KB.UWS.EDU.PL
+
+[logging]
+        kdc = FILE:/var/log/krb5kdc.log
+        admin_server = FILE:/var/log/kadmin.log
+        default = FILE:/var/log/krb5lib.log
+
+root@kerberos:~# cp /lab/etc/kdc.conf /etc/krb5kdc/kdc.conf && cat /etc/krb5kdc/kdc.conf
+[kdcdefaults]
+    kdc_ports = 750,88
+
+[realms]
+    REALM.KB.UWS.EDU.PL = {
+        database_name = /var/lib/krb5kdc/principal
+        admin_keytab = FILE:/etc/krb5kdc/kadm5.keytab
+        acl_file = /etc/krb5kdc/kadm5.acl
+        key_stash_file = /etc/krb5kdc/stash
+        kdc_ports = 750,88
+        max_life = 10h 0m 0s
+        max_renewable_life = 7d 0h 0m 0s
+        master_key_type = aes256-cts-hmac-sha1-96
+        supported_enctypes = aes256-cts:normal aes128-cts:normal
+        default_principal_flags = +preauth
+    }
+
+root@kerberos:~# kdb5_util create -r REALM.KB.UWS.EDU.PL -s -P uwsii
+Initializing database '/var/lib/krb5kdc/principal' for realm 'REALM.KB.UWS.EDU.PL',
+master key name 'K/M@REALM.KB.UWS.EDU.PL'
+
+root@kerberos:~# ls -l /var/lib/krb5kdc /etc/krb5kdc
+/etc/krb5kdc:
+total 8
+-rw-r--r-- 1 root root 527 Oct 25 09:23 kdc.conf
+-rw------- 1 root root  84 Oct 25 09:23 stash
+
+/var/lib/krb5kdc:
+total 16
+-rw------- 1 root root 8192 Oct 25 09:23 principal
+-rw------- 1 root root 8192 Oct 25 09:23 principal.kadm5
+-rw------- 1 root root    0 Oct 25 09:23 principal.kadm5.lock
+-rw------- 1 root root    0 Oct 25  2026 principal.ok
+
+
+===== Zadanie 3. Zarządzanie użytkownikami =====
+
+root@kerberos:~# cp /lab/etc/kadm5.acl /etc/krb5kdc/kadm5.acl && cat /etc/krb5kdc/kadm5.acl
+*/admin@REALM.KB.UWS.EDU.PL *
+
+root@kerberos:~# service krb5-kdc start; service krb5-admin-server start
+Starting Kerberos KDC: krb5kdc.
+Starting Kerberos administrative servers: kadmind.
+
+root@kerberos:~# service krb5-kdc status; service krb5-admin-server status
+krb5kdc is running.
+kadmind is running.
+
+root@kerberos:~# kadmin.local -q 'addprinc -pw uwsii student/admin'
+No policy specified for student/admin@REALM.KB.UWS.EDU.PL; defaulting to no policy
+Authenticating as principal root/admin@REALM.KB.UWS.EDU.PL with password.
+Principal "student/admin@REALM.KB.UWS.EDU.PL" created.
+
+root@kerberos:~# kadmin.local -q 'addprinc -pw uwsii student'
+No policy specified for student@REALM.KB.UWS.EDU.PL; defaulting to no policy
+Authenticating as principal root/admin@REALM.KB.UWS.EDU.PL with password.
+Principal "student@REALM.KB.UWS.EDU.PL" created.
+
+root@kerberos:~# kadmin.local -q 'addprinc -randkey host/kerberos.uws.edu.pl'
+No policy specified for host/kerberos.uws.edu.pl@REALM.KB.UWS.EDU.PL; defaulting to no policy
+Authenticating as principal root/admin@REALM.KB.UWS.EDU.PL with password.
+Principal "host/kerberos.uws.edu.pl@REALM.KB.UWS.EDU.PL" created.
+
+root@kerberos:~# kadmin.local -q 'ktadd host/kerberos.uws.edu.pl'
+Authenticating as principal root/admin@REALM.KB.UWS.EDU.PL with password.
+Entry for principal host/kerberos.uws.edu.pl with kvno 2, encryption type aes256-cts-hmac-sha1-96 added to keytab FILE:/etc/krb5.keytab.
+Entry for principal host/kerberos.uws.edu.pl with kvno 2, encryption type aes128-cts-hmac-sha1-96 added to keytab FILE:/etc/krb5.keytab.
+
+root@kerberos:~# kadmin.local -q 'listprincs'
+Authenticating as principal root/admin@REALM.KB.UWS.EDU.PL with password.
+K/M@REALM.KB.UWS.EDU.PL
+host/kerberos.uws.edu.pl@REALM.KB.UWS.EDU.PL
+kadmin/admin@REALM.KB.UWS.EDU.PL
+kadmin/changepw@REALM.KB.UWS.EDU.PL
+krbtgt/REALM.KB.UWS.EDU.PL@REALM.KB.UWS.EDU.PL
+student/admin@REALM.KB.UWS.EDU.PL
+student@REALM.KB.UWS.EDU.PL
+
+root@kerberos:~# kadmin.local -q 'getprinc student'
+Authenticating as principal root/admin@REALM.KB.UWS.EDU.PL with password.
+Principal: student@REALM.KB.UWS.EDU.PL
+Expiration date: [never]
+Last password change: Sun Oct 25 09:23:30 UTC 2026
+Password expiration date: [never]
+Maximum ticket life: 0 days 10:00:00
+Maximum renewable life: 7 days 00:00:00
+Last modified: Sun Oct 25 09:23:30 UTC 2026 (root/admin@REALM.KB.UWS.EDU.PL)
+Last successful authentication: [never]
+Last failed authentication: [never]
+Failed password attempts: 0
+Number of keys: 2
+Key: vno 1, aes256-cts-hmac-sha1-96
+Key: vno 1, aes128-cts-hmac-sha1-96
+MKey: vno 1
+Attributes: REQUIRES_PRE_AUTH
+Policy: [none]
+
+root@kerberos:~# klist -ke /etc/krb5.keytab
+Keytab name: FILE:/etc/krb5.keytab
+KVNO Principal
+---- --------------------------------------------------------------------------
+   2 host/kerberos.uws.edu.pl@REALM.KB.UWS.EDU.PL (aes256-cts-hmac-sha1-96) 
+   2 host/kerberos.uws.edu.pl@REALM.KB.UWS.EDU.PL (aes128-cts-hmac-sha1-96) 
+
+root@kerberos:~# kadmin -p student/admin -w uwsii -q 'listprincs'
+Authenticating as principal student/admin with password.
+K/M@REALM.KB.UWS.EDU.PL
+host/kerberos.uws.edu.pl@REALM.KB.UWS.EDU.PL
+kadmin/admin@REALM.KB.UWS.EDU.PL
+kadmin/changepw@REALM.KB.UWS.EDU.PL
+krbtgt/REALM.KB.UWS.EDU.PL@REALM.KB.UWS.EDU.PL
+student/admin@REALM.KB.UWS.EDU.PL
+student@REALM.KB.UWS.EDU.PL
+
+root@kerberos:~# kinit student <<< uwsii && klist && kdestroy
+Password for student@REALM.KB.UWS.EDU.PL: 
+Ticket cache: FILE:/tmp/krb5cc_0
+Default principal: student@REALM.KB.UWS.EDU.PL
+
+Valid starting     Expires            Service principal
+10/25/26 09:23:32  10/25/26 19:23:32  krbtgt/REALM.KB.UWS.EDU.PL@REALM.KB.UWS.EDU.PL
+	renew until 10/26/26 09:23:32
+
+
+===== Zadanie 4. Zarządzanie usługami (SSH) =====
+
+root@kerberos:~# cp /lab/etc/sshd_kerberos.conf /etc/ssh/sshd_config.d/kerberos.conf && cat /etc/ssh/sshd_config.d/kerberos.conf
+# Uwierzytelnianie użytkowników przez Kerberosa (GSSAPI)
+GSSAPIAuthentication yes
+GSSAPICleanupCredentials yes
+# Wymiana kluczy GSSAPI (łatka Debiana)
+GSSAPIKeyExchange yes
+
+root@kerberos:~# useradd -m -s /bin/bash student && id student
+uid=1000(student) gid=1000(student) groups=1000(student)
+
+root@kerberos:~# echo SSHD_OPTS=\"-E /var/log/sshd.log\" >> /etc/default/ssh && service ssh start && sshd -t && service ssh status
+Starting OpenBSD Secure Shell server: sshd.
+sshd is running.
+
+root@kerberos:~# sshd -T | grep -i gssapi
+gssapiauthentication yes
+gssapicleanupcredentials yes
+gssapikeyexchange yes
+gssapistrictacceptorcheck yes
+gssapistorecredentialsonrekey no
+gssapikexalgorithms gss-group14-sha256-,gss-group16-sha512-,gss-nistp256-sha256-,gss-curve25519-sha256-,gss-group14-sha1-,gss-gex-sha1-
+
+
+===== Zadanie 5. Uwierzytelnianie przez usługę Kerberosa =====
+
+root@kerberos:~# for i in $(seq 36); do ntpq -pn | grep "^\*" >/dev/null && break; sleep 5; done; ntpq -pn | grep -E "remote|^=|^\*"; date
+     remote           refid      st t when poll reach   delay   offset   jitter
+===============================================================================
+*109.206.205.239 .GPS.            1 u    3   64    1  46.4196 118.6470   5.7767
+Sun Oct 25 09:23:39 UTC 2026
+
+root@client:~# hostname -f; getent hosts kerberos.uws.edu.pl
+client.uws.edu.pl
+172.21.0.2      kerberos.uws.edu.pl
+
+root@client:~# apt-get update -qq
+
+root@client:~# cat <<EOF | debconf-set-selections
+krb5-config krb5-config/default_realm string REALM.KB.UWS.EDU.PL
+krb5-config krb5-config/kerberos_servers string kerberos.uws.edu.pl
+krb5-config krb5-config/admin_server string kerberos.uws.edu.pl
+krb5-config krb5-config/add_servers_realm string REALM.KB.UWS.EDU.PL
+krb5-config krb5-config/add_servers boolean true
+krb5-config krb5-config/read_conf boolean true
+EOF
+
+root@client:~# DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o=Dpkg::Use-Pty=0 ntp krb5-user openssh-client >/tmp/apt.log 2>&1; echo "apt: kod $?"; dpkg -l ntp ntpsec krb5-user openssh-client | tail -4
+apt: kod 0
+ii  krb5-user      1.20.1-2+deb12u5                        arm64        basic programs to authenticate using MIT Kerberos
+ii  ntp            1:4.2.8p15+dfsg-2~1.2.2+dfsg1-1+deb12u1 all          Network Time Protocol daemon/utilities (transitional package)
+ii  ntpsec         1.2.2+dfsg1-1+deb12u1                   arm64        Network Time Protocol daemon and utility programs
+ii  openssh-client 1:9.2p1-2+deb12u10                      arm64        secure shell (SSH) client, for secure access to remote machines
+
+root@client:~# service ntpsec start; sleep 3; service ntpsec status; date
+Starting NTP server: ntpd2026-10-25T09:24:08 ntpd[3843]: INIT: ntpd ntpsec-1.2.2: Starting
+2026-10-25T09:24:08 ntpd[3843]: INIT: Command line: /usr/sbin/ntpd -p /run/ntpd.pid -c /etc/ntpsec/ntp.conf -g -N -u ntpsec:ntpsec
+.
+NTP server is running.
+Sun Oct 25 09:24:11 UTC 2026
+
+root@client:~# cp /lab/etc/krb5.conf /etc/krb5.conf && cat /etc/krb5.conf
+[libdefaults]
+        default_realm = REALM.KB.UWS.EDU.PL
+        rdns = false
+        dns_lookup_kdc = false
+        dns_lookup_realm = false
+        forwardable = true
+
+[realms]
+        REALM.KB.UWS.EDU.PL = {
+                kdc = kerberos.uws.edu.pl
+                admin_server = kerberos.uws.edu.pl
+        }
+
+[domain_realm]
+        kerberos.uws.edu.pl = REALM.KB.UWS.EDU.PL
+        .uws.edu.pl = REALM.KB.UWS.EDU.PL
+
+[logging]
+        kdc = FILE:/var/log/krb5kdc.log
+        admin_server = FILE:/var/log/kadmin.log
+        default = FILE:/var/log/krb5lib.log
+
+root@client:~# cp /lab/etc/ssh_kerberos.conf /etc/ssh/ssh_config.d/kerberos.conf && cat /etc/ssh/ssh_config.d/kerberos.conf
+Host *
+    GSSAPIAuthentication yes
+    GSSAPIKeyExchange yes
+
+root@client:~# ssh-keyscan -t ed25519 kerberos.uws.edu.pl > ~/.ssh_known 2>/dev/null; mkdir -p ~/.ssh && mv ~/.ssh_known ~/.ssh/known_hosts
+
+root@client:~# klist; ssh -o BatchMode=yes student@kerberos.uws.edu.pl hostname
+klist: No credentials cache found (filename: /tmp/krb5cc_0)
+student@kerberos.uws.edu.pl: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
+
+root@client:~# kinit student <<< uwsii
+Password for student@REALM.KB.UWS.EDU.PL: 
+
+root@client:~# klist
+Ticket cache: FILE:/tmp/krb5cc_0
+Default principal: student@REALM.KB.UWS.EDU.PL
+
+Valid starting     Expires            Service principal
+10/25/26 09:24:13  10/25/26 19:24:13  krbtgt/REALM.KB.UWS.EDU.PL@REALM.KB.UWS.EDU.PL
+	renew until 10/26/26 09:24:13
+
+root@client:~# ssh -v -o BatchMode=yes student@kerberos.uws.edu.pl "whoami; hostname -f" 2>/lab/ssh_debug.log
+student
+kerberos.uws.edu.pl
+
+root@client:~# grep -E "Authenticating to|Offering GSSAPI|kex: algorithm|Authentications that|Next authentication|Authentication succeeded|Authenticated to" /lab/ssh_debug.log
+debug1: Authenticating to kerberos.uws.edu.pl:22 as 'student'
+debug1: Offering GSSAPI proposal: gss-group14-sha256-toWM5Slw5Ew8Mqkay+al2g==,gss-group16-sha512-toWM5Slw5Ew8Mqkay+al2g==,gss-nistp256-sha256-toWM5Slw5Ew8Mqkay+al2g==,gss-curve25519-sha256-toWM5Slw5Ew8Mqkay+al2g==,gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==,gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==,gss-group14-sha256-eipGX3TCiQSrx573bT1o1Q==,gss-group16-sha512-eipGX3TCiQSrx573bT1o1Q==,gss-nistp256-sha256-eipGX3TCiQSrx573bT1o1Q==,gss-curve25519-sha256-eipGX3TCiQSrx573bT1o1Q==,gss-group14-sha1-eipGX3TCiQSrx573bT1o1Q==,gss-gex-sha1-eipGX3TCiQSrx573bT1o1Q==
+debug1: kex: algorithm: gss-group14-sha256-toWM5Slw5Ew8Mqkay+al2g==
+debug1: Authentications that can continue: publickey,gssapi-keyex,gssapi-with-mic,password
+debug1: Next authentication method: gssapi-keyex
+Authenticated to kerberos.uws.edu.pl ([172.21.0.2]:22) using "gssapi-keyex".
+
+root@client:~# klist
+Ticket cache: FILE:/tmp/krb5cc_0
+Default principal: student@REALM.KB.UWS.EDU.PL
+
+Valid starting     Expires            Service principal
+10/25/26 09:24:13  10/25/26 19:24:13  krbtgt/REALM.KB.UWS.EDU.PL@REALM.KB.UWS.EDU.PL
+	renew until 10/26/26 09:24:13
+10/25/26 09:24:13  10/25/26 19:24:13  host/kerberos.uws.edu.pl@REALM.KB.UWS.EDU.PL
+	renew until 10/26/26 09:24:13
+
+root@client:~# ssh -v -o BatchMode=yes -o GSSAPIKeyExchange=no student@kerberos.uws.edu.pl id 2>&1 | grep -E "kex: algorithm|Next authentication|Authenticated to|^uid="
+debug1: kex: algorithm: sntrup761x25519-sha512
+debug1: Next authentication method: gssapi-with-mic
+Authenticated to kerberos.uws.edu.pl ([172.21.0.2]:22) using "gssapi-with-mic".
+uid=1000(student) gid=1000(student) groups=1000(student)
+
+root@kerberos:~# grep -E "ISSUE" /var/log/krb5kdc.log | tail -2
+Oct 25 09:24:13 kerberos.uws.edu.pl krb5kdc[4341](info): AS_REQ (8 etypes {aes256-cts-hmac-sha1-96(18), aes128-cts-hmac-sha1-96(17), aes256-cts-hmac-sha384-192(20), aes128-cts-hmac-sha256-128(19), DEPRECATED:des3-cbc-sha1(16), DEPRECATED:arcfour-hmac(23), camellia128-cts-cmac(25), camellia256-cts-cmac(26)}) 172.21.0.3: ISSUE: authtime 1792920253, etypes {rep=aes256-cts-hmac-sha1-96(18), tkt=aes256-cts-hmac-sha1-96(18), ses=aes256-cts-hmac-sha1-96(18)}, student@REALM.KB.UWS.EDU.PL for krbtgt/REALM.KB.UWS.EDU.PL@REALM.KB.UWS.EDU.PL
+Oct 25 09:24:13 kerberos.uws.edu.pl krb5kdc[4341](info): TGS_REQ (8 etypes {aes256-cts-hmac-sha1-96(18), aes128-cts-hmac-sha1-96(17), aes256-cts-hmac-sha384-192(20), aes128-cts-hmac-sha256-128(19), DEPRECATED:des3-cbc-sha1(16), DEPRECATED:arcfour-hmac(23), camellia128-cts-cmac(25), camellia256-cts-cmac(26)}) 172.21.0.3: ISSUE: authtime 1792920253, etypes {rep=aes256-cts-hmac-sha1-96(18), tkt=aes256-cts-hmac-sha1-96(18), ses=aes256-cts-hmac-sha1-96(18)}, student@REALM.KB.UWS.EDU.PL for host/kerberos.uws.edu.pl@REALM.KB.UWS.EDU.PL
+
+root@kerberos:~# grep -E "Accepted|Authorized" /var/log/sshd.log
+Authorized to student, krb5 principal student@REALM.KB.UWS.EDU.PL (krb5_kuserok)
+Accepted gssapi-keyex for student from 172.21.0.3 port 51106 ssh2: student@REALM.KB.UWS.EDU.PL
+Authorized to student, krb5 principal student@REALM.KB.UWS.EDU.PL (krb5_kuserok)
+Accepted gssapi-with-mic for student from 172.21.0.3 port 51114 ssh2: student@REALM.KB.UWS.EDU.PL
+
+root@client:~# ntpq -pn 2>/dev/null | sed -n "1,10p"; date
+     remote           refid      st t when poll reach   delay   offset   jitter
+===============================================================================
+ 0.debian.pool.n .POOL.          16 p    -  256    0   0.0000   0.0000   0.0001
+ 1.debian.pool.n .POOL.          16 p    -  256    0   0.0000   0.0000   0.0001
+ 2.debian.pool.n .POOL.          16 p    -  256    0   0.0000   0.0000   0.0001
+ 3.debian.pool.n .POOL.          16 p    -  256    0   0.0000   0.0000   0.0001
+ 195.46.37.22    .INIT.          16 u    -   64    0   0.0000   0.0000   0.0001
+ 89.161.47.133   .INIT.          16 u    -   64    0   0.0000   0.0000   0.0001
++109.206.205.239 .GPS.            1 u    -   64    1  39.9056 115.0741   4.4130
+ 185.73.211.3    .INIT.          16 u    -   64    0   0.0000   0.0000   0.0001
+Sun Oct 25 09:24:16 UTC 2026
+
+root@client:~# kdestroy && klist; ssh -o BatchMode=yes student@kerberos.uws.edu.pl hostname
+klist: No credentials cache found (filename: /tmp/krb5cc_0)
+student@kerberos.uws.edu.pl: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).

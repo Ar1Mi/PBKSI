@@ -1,0 +1,29 @@
+# Dwie "maszyny" do laboratorium 2:
+#  - kerberos — serwer uwierzytelniający (KDC + kadmind) i serwer SSH,
+#  - client   — klient Kerberosa i klient SSH.
+# Pakiety instalowane są ręcznie w trakcie ćwiczenia (zob. run.sh), obraz to czysty Debian.
+services:
+  kerberos:
+    image: debian:bookworm
+    hostname: kerberos.uws.edu.pl
+    command: sleep infinity
+    cap_add: [SYS_TIME, SYS_NICE, IPC_LOCK]   # potrzebne ntpd (korekta zegara, priorytet, mlock)
+    volumes:
+      - ./server:/lab
+    networks:
+      lab:
+        aliases: [kerberos.uws.edu.pl]
+
+  client:
+    image: debian:bookworm
+    hostname: client.uws.edu.pl
+    command: sleep infinity
+    cap_add: [SYS_TIME, SYS_NICE, IPC_LOCK]   # potrzebne ntpd (korekta zegara, priorytet, mlock)
+    volumes:
+      - ./client:/lab
+    networks:
+      lab:
+        aliases: [client.uws.edu.pl]
+
+networks:
+  lab:

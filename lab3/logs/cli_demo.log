@@ -1,0 +1,255 @@
+
+==============================================================================
+A. Żądanie autoryzacyjne (przeglądarka -> serwer autoryzacyjny)
+==============================================================================
+GET http://localhost:8080/realms/pbksi/protocol/openid-connect/auth?response_type=code&client_id=pbksi-webapp&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fcallback&scope=openid+profile+email+roles&state=6cJQ_dqXwzlNXzzkcNTcZA&code_challenge=WpReQ9XjDU_xT9yxUzslPw5KMLAAheCOSXN9iA5KR04&code_challenge_method=S256
+HTTP 200 -> strona logowania Keycloaka (8745 B HTML)
+
+==============================================================================
+B. Uwierzytelnienie właściciela zasobu (jan) i zgoda na zakres
+==============================================================================
+POST http://localhost:8080/realms/pbksi/login-actions/authenticate?...  username=jan&password=***
+HTTP 302 -> http://localhost:8080/realms/pbksi/login-actions/required-action (wymagana akcja OAUTH_GRANT = zgoda)
+HTTP 200 -> ekran zgody, aplikacja prosi o: Profil użytkownika, Adres e-mail, Role użytkownika
+POST http://localhost:8080/realms/pbksi/login-actions/consent?...  accept=Yes
+
+==============================================================================
+C. Przekierowanie z kodem autoryzacyjnym (serwer autoryzacyjny -> przeglądarka -> klient)
+==============================================================================
+HTTP 302 Found
+Location: http://localhost:5000/callback?state=6cJQ_dqXwzlNXzzkcNTcZA&session_state=3b2eab3e-086c-7950-6424-ce4ff7406712&iss=http%3A%2F%2Flocalhost%3A8080%2Frealms%2Fpbks...
+Cache-Control: no-store, must-revalidate, max-age=0
+
+state zgodny z wysłanym: True
+code = fea8d270-26b7-01d2-d...affa7915
+
+==============================================================================
+D. Wymiana kodu na token (klient -> punkt tokenów, back-channel)
+==============================================================================
+POST http://localhost:8080/realms/pbksi/protocol/openid-connect/token
+Authorization: Basic base64(pbksi-webapp:***)
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&code=fea8d270-26b7-01d2-d...affa7915&redirect_uri=http://localhost:5000/callback&code_verifier=czkO_JMTjlnx...
+
+==============================================================================
+E. Odpowiedź serwera autoryzacyjnego z tokenami
+==============================================================================
+HTTP 200 OK
+Cache-Control: no-store
+Pragma: no-cache
+Content-Type: application/json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIs...glHJU8dA",
+  "expires_in": 120,
+  "refresh_expires_in": 21600,
+  "refresh_token": "eyJhbGciOiJIUzUxMiIs...85uOWJHQ",
+  "token_type": "Bearer",
+  "id_token": "eyJhbGciOiJSUzI1NiIs...EJiYcKOQ",
+  "not-before-policy": 0,
+  "session_state": "3b2eab3e-086c-7950-6424-ce4ff7406712",
+  "scope": "openid profile email"
+}
+
+access_token : iat=10:21:10 exp=10:23:10 -> czas życia 120 s
+refresh_token: iat=10:21:10 exp=16:21:10 -> czas życia 21600 s  (= 6 h)
+access_token: realm_access.roles = ['user'], aud = pbksi-api
+
+==============================================================================
+Ponowne użycie tego samego kodu autoryzacyjnego (kod jest jednorazowy)
+==============================================================================
+HTTP 400 Bad Request
+Cache-Control: no-store
+Pragma: no-cache
+Content-Type: application/json
+{
+  "error": "invalid_grant",
+  "error_description": "Code not valid"
+}
+
+==============================================================================
+PKCE: przechwycony kod bez właściwego code_verifier jest bezużyteczny
+==============================================================================
+nowy kod (sesja SSO już istnieje, logowanie nie jest potrzebne): 7865bde6-b96a-2977-f...affa7915
+POST /token ... code=<nowy kod>&code_verifier=<inny, losowy>
+HTTP 400 Bad Request
+Cache-Control: no-store
+Pragma: no-cache
+Content-Type: application/json
+{
+  "error": "invalid_grant",
+  "error_description": "PKCE verification failed: Code mismatch"
+}
+
+POST /token ... poprawny code i code_verifier, ale zły client_secret
+HTTP 401 Unauthorized
+Cache-Control: no-store
+Pragma: no-cache
+Content-Type: application/json
+{
+  "error": "unauthorized_client",
+  "error_description": "Invalid client or Invalid client credentials"
+}
+
+==============================================================================
+Żądania zasobów z tokenem Bearer (użytkownik jan)
+==============================================================================
+
+GET http://localhost:5001/api/me
+Authorization: Bearer eyJhbGciOiJSUzI1NiIs...glHJU8dA
+HTTP 200 OK
+Content-Type: application/json
+{
+  "email": "jan@uws.edu.pl",
+  "imie_nazwisko": "Jan Nowak",
+  "login": "jan",
+  "role": [
+    "user"
+  ],
+  "scope": "openid profile email",
+  "sub": "54b96f49-b96a-4c18-8f33-80c763063883",
+  "token_wygasa_za_s": 119,
+  "uprawnienia": [
+    "grades:read",
+    "profile:read"
+  ]
+}
+
+GET http://localhost:5001/api/grades
+Authorization: Bearer eyJhbGciOiJSUzI1NiIs...glHJU8dA
+HTTP 200 OK
+Content-Type: application/json
+{
+  "login": "jan",
+  "oceny": [
+    {
+      "ocena": 4.0,
+      "przedmiot": "Problemy bezpieczeństwa komputerowego w SI"
+    },
+    {
+      "ocena": 3.5,
+      "przedmiot": "Systemy rozproszone"
+    },
+    {
+      "ocena": 4.5,
+      "przedmiot": "Uczenie maszynowe"
+    }
+  ]
+}
+
+GET http://localhost:5001/api/admin/users
+Authorization: Bearer eyJhbGciOiJSUzI1NiIs...glHJU8dA
+HTTP 403 FORBIDDEN
+WWW-Authenticate: Bearer realm="pbksi-api", error="insufficient_scope", error_description="Permission users:read required", scope="users:read"
+Content-Type: application/json
+{
+  "error": "insufficient_scope",
+  "error_description": "Permission users:read required"
+}
+
+==============================================================================
+Żądanie bez tokenu i z podrobionym tokenem
+==============================================================================
+
+GET http://localhost:5001/api/me
+Authorization: Bearer -   (bez nagłówka Authorization)
+HTTP 401 UNAUTHORIZED
+WWW-Authenticate: Bearer realm="pbksi-api"
+Content-Type: application/json
+{
+  "error": "unauthorized",
+  "error_description": null
+}
+
+GET http://localhost:5001/api/me
+Authorization: Bearer eyJhbGciOiJSUzI1NiIs...AAAAAAAA   (token ze zmienionym podpisem)
+HTTP 401 UNAUTHORIZED
+WWW-Authenticate: Bearer realm="pbksi-api", error="invalid_token", error_description="The access token is invalid"
+Content-Type: application/json
+{
+  "error": "invalid_token",
+  "error_description": "The access token is invalid"
+}
+
+==============================================================================
+Odświeżenie access tokenu (grant_type=refresh_token)
+==============================================================================
+POST http://localhost:8080/realms/pbksi/protocol/openid-connect/token
+Authorization: Basic base64(pbksi-webapp:***)
+
+grant_type=refresh_token&refresh_token=eyJhbGciOiJIUzUxMiIs...85uOWJHQ
+HTTP 200 OK
+Cache-Control: no-store
+Pragma: no-cache
+Content-Type: application/json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIs...Qwgv_ENg",
+  "expires_in": 120,
+  "refresh_expires_in": 21598,
+  "refresh_token": "eyJhbGciOiJIUzUxMiIs...vmJoLCJQ",
+  "token_type": "Bearer",
+  "id_token": "eyJhbGciOiJSUzI1NiIs...Moz-gdWQ",
+  "not-before-policy": 0,
+  "session_state": "3b2eab3e-086c-7950-6424-ce4ff7406712",
+  "scope": "openid profile email"
+}
+
+nowy refresh_token różny od starego: True
+nowy refresh_token: iat=10:21:12 exp=16:21:10 -> czas życia 21598 s
+  -> exp się nie przesuwa: refresh token żyje maks. 6 h od zalogowania (ssoSessionMaxLifespan)
+introspekcja nowego access tokenu: active = True
+
+==============================================================================
+Ponowne użycie STAREGO refresh tokenu (rotacja: revokeRefreshToken=true, refreshTokenMaxReuse=0)
+==============================================================================
+HTTP 400 Bad Request
+Cache-Control: no-store
+Pragma: no-cache
+Content-Type: application/json
+{
+  "error": "invalid_grant",
+  "error_description": "Maximum allowed refresh token reuse exceeded"
+}
+
+introspekcja NOWEGO access tokenu po tej próbie: active = False
+  -> wykrycie ponownego użycia unieważnia całą sesję (całą "rodzinę" tokenów),
+     więc złodziej starego refresh tokenu nie zyskuje nic, a prawowity klient musi się zalogować ponownie
+
+GET http://localhost:5001/api/me
+Authorization: Bearer eyJhbGciOiJSUzI1NiIs...Qwgv_ENg   (nowy access token po wykryciu ponownego użycia)
+HTTP 401 UNAUTHORIZED
+WWW-Authenticate: Bearer realm="pbksi-api", error="invalid_token", error_description="The access token has been revoked"
+Content-Type: application/json
+{
+  "error": "invalid_token",
+  "error_description": "The access token has been revoked"
+}
+
+==============================================================================
+Nowe logowanie (bez wypisywania kroków) i unieważnienie tokenów jak przy wylogowaniu
+==============================================================================
+nowe tokeny: access eyJhbGciOiJSUzI1NiIs...MPLIfnvQ, refresh eyJhbGciOiJIUzUxMiIs...yLDl8hcQ
+introspekcja access tokenu: active = True
+POST http://localhost:8080/realms/pbksi/protocol/openid-connect/revoke  token_type_hint=refresh_token -> HTTP 200
+POST http://localhost:8080/realms/pbksi/protocol/openid-connect/revoke  token_type_hint=access_token -> HTTP 200
+introspekcja access tokenu po revoke: active = False
+
+GET http://localhost:5001/api/me
+Authorization: Bearer eyJhbGciOiJSUzI1NiIs...MPLIfnvQ   (unieważniony access token)
+HTTP 401 UNAUTHORIZED
+WWW-Authenticate: Bearer realm="pbksi-api", error="invalid_token", error_description="The access token has been revoked"
+Content-Type: application/json
+{
+  "error": "invalid_token",
+  "error_description": "The access token has been revoked"
+}
+
+POST /token grant_type=refresh_token (unieważniony refresh token)
+HTTP 400 Bad Request
+Cache-Control: no-store
+Pragma: no-cache
+Content-Type: application/json
+{
+  "error": "invalid_grant",
+  "error_description": "Session not active"
+}

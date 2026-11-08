@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}PBKSI OAuth 2.0{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <a class="brand" href="/">PBKSI <span>· OAuth 2.0 lab 3</span></a>
+  {% if g.logged %}
+  <nav>
+    <a href="/">Start</a>
+    <a href="/tokeny">Tokeny</a>
+    <a href="/audyt">Audyt</a>
+    <span class="who">{{ g.sess.user.name }} ({{ g.sess.user.login }})</span>
+    <form method="post" action="/wyloguj" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ g.sess.csrf }}">
+      <button class="btn small">Wyloguj</button>
+    </form>
+  </nav>
+  {% endif %}
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer>Klient: pbksi-webapp · serwer autoryzacyjny: Keycloak (realm pbksi) · serwer zasobów: pbksi-api</footer>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

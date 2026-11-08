@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>Dziennik audytu bezpieczeństwa</h1>
+  <p class="muted">Plik <code>logs/audit.log</code>, najnowsze zdarzenia na górze. Widok dostępny tylko dla roli <span class="role admin">admin</span>.</p>
+  <pre class="log">{% for l in lines %}{{ l }}{% endfor %}</pre>
+</section>
+{% endblock %}

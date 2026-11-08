@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>Tokeny w sesji</h1>
+  <p class="muted">Tokeny są przechowywane wyłącznie po stronie serwera (SQLite, szyfrowane Fernet). Przeglądarka ma tylko losowy identyfikator sesji w ciasteczku HttpOnly. Poniżej skrócone wartości i zdekodowana zawartość.</p>
+  <div class="grid2">
+    <div class="tok">
+      <h2>Access token</h2>
+      <code>{{ info.access.raw }}</code>
+      <table class="kv">
+        <tr><th>Wydany (iat)</th><td>{{ fmt(info.access.claims.iat) }}</td></tr>
+        <tr><th>Wygasa (exp)</th><td>{{ fmt(info.access.claims.exp) }}</td></tr>
+        <tr><th>Czas życia</th><td>{{ info.access.life }} s ({{ (info.access.life/60)|round(1) }} min)</td></tr>
+        <tr><th>Pozostało</th><td><span data-countdown="{{ info.access.left }}">{{ info.access.left }} s</span></td></tr>
+      </table>
+    </div>
+    <div class="tok">
+      <h2>Refresh token</h2>
+      <code>{{ info.refresh.raw }}</code>
+      <table class="kv">
+        <tr><th>Wydany (iat)</th><td>{{ fmt(info.refresh.claims.iat) }}</td></tr>
+        <tr><th>Wygasa (exp)</th><td>{{ fmt(info.refresh.claims.exp) }}</td></tr>
+        <tr><th>Czas życia</th><td>{{ info.refresh.life }} s ({{ (info.refresh.life/3600)|round(2) }} h)</td></tr>
+        <tr><th>Pozostało</th><td><span data-countdown="{{ info.refresh.left }}">{{ info.refresh.left }} s</span></td></tr>
+      </table>
+    </div>
+  </div>
+  <form method="post" action="/odswiez">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <button class="btn">Odśwież access token teraz (grant_type=refresh_token)</button>
+  </form>
+</section>
+<section class="card">
+  <h2>Zawartość access tokenu</h2>
+  <pre>{{ json(info.access.claims) }}</pre>
+  <h2>Zawartość refresh tokenu</h2>
+  <pre>{{ json(info.refresh.claims) }}</pre>
+</section>
+{% endblock %}

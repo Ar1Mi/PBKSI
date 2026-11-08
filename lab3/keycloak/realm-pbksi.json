@@ -1,0 +1,158 @@
+{
+  "realm": "pbksi",
+  "displayName": "PBKSI - Laboratorium 3",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "accessTokenLifespan": 120,
+  "ssoSessionIdleTimeout": 21600,
+  "ssoSessionMaxLifespan": 21600,
+  "clientSessionIdleTimeout": 21600,
+  "clientSessionMaxLifespan": 21600,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "eventsEnabled": true,
+  "eventsExpiration": 86400,
+  "enabledEventTypes": [
+    "LOGIN",
+    "LOGIN_ERROR",
+    "CODE_TO_TOKEN",
+    "CODE_TO_TOKEN_ERROR",
+    "REFRESH_TOKEN",
+    "REFRESH_TOKEN_ERROR",
+    "LOGOUT",
+    "REVOKE_GRANT"
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Administrator aplikacji PBKSI"
+      },
+      {
+        "name": "user",
+        "description": "Zwykly uzytkownik aplikacji PBKSI"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "pbksi-webapp",
+      "name": "PBKSI WebApp (lab 3)",
+      "description": "Aplikacja webowa z laboratorium 3 - klient OAuth 2.0",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "lab3-client-secret-zmien-mnie",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "consentRequired": true,
+      "rootUrl": "http://localhost:5000",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:5000/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:5000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5000/",
+        "client.secret.creation.time": "1762588800"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience pbksi-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "pbksi-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ],
+      "fullScopeAllowed": true
+    },
+    {
+      "clientId": "pbksi-api",
+      "name": "PBKSI API (serwer zasobow)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "lab3-api-secret-zmien-mnie",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "anna",
+      "firstName": "Anna",
+      "lastName": "Kowalska",
+      "email": "anna@uws.edu.pl",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "anna123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin",
+        "user"
+      ]
+    },
+    {
+      "username": "jan",
+      "firstName": "Jan",
+      "lastName": "Nowak",
+      "email": "jan@uws.edu.pl",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "jan123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user"
+      ]
+    },
+    {
+      "username": "ewa",
+      "firstName": "Ewa",
+      "lastName": "Wisniewska",
+      "email": "ewa@uws.edu.pl",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "ewa123",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "pl",
+    "en"
+  ],
+  "defaultLocale": "pl"
+}

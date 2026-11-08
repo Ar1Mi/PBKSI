@@ -6,3 +6,5 @@
 newkey*.pem
 *.p12
 lab_*.pdf
+lab3/.env
+lab3/data/

@@ -1,0 +1,37 @@
+zrzut: 01_kc_client_settings
+zrzut: 01b_kc_client_capability
+zrzut: 02_kc_client_credentials
+zrzut: 03_kc_realm_refresh_tokens
+zrzut: 04_kc_realm_sessions
+zrzut: 05_kc_roles
+zrzut: 06_kc_users
+zrzut: 10_app_start
+zrzut: 11_keycloak_login
+zrzut: 12_consent
+zrzut: 13_home_admin
+zrzut: 14_oceny_anna
+zrzut: 15_uzytkownicy_admin
+zrzut: 16_tokeny
+sid_hash = f3ed3f58184c228afc632c090eb8e500c67694fd171c00451e1f65d919f15947
+created  = 1794129706   expires = 1794151306
+data     = gAAAAABq8D8qGuEwpxvW-j5wI5p_TNhTm5knW1utnFhYPWr_BTt5iqx6aRPaRLgROv33fBaqXM8rY7psydZxzE01u8k0RDvNi-7B... (4644 B)
+
+
+ciasteczka aplikacji: [('AUTH_SESSION_ID', True, 'None'), ('KC_AUTH_SESSION_HASH', False, 'None'), ('KEYCLOAK_IDENTITY', True, 'None'), ('KEYCLOAK_SESSION', False, 'None'), ('pbksi_sid', True, 'Lax')]
+zrzut: 30_csrf_logout_blocked
+POST /odswiez bez poprawnego tokenu CSRF -> 403
+zrzut: 31_consent_denied
+zrzut: 24_home_guest
+zrzut: 25_guest_forbidden
+admin: zakończenie sesji ewy w Keycloaku -> 204
+czekam 125 s na wygaśnięcie access tokenów...
+zrzut: 17_tokeny_po_odswiezeniu
+zrzut: 26_sesja_wygasla
+zrzut: 18_tokeny_reczne_odswiezenie
+zrzut: 20_home_user
+zrzut: 21_oceny_jan
+zrzut: 22_user_forbidden
+zrzut: 23_wylogowano
+zrzut: 32_callback_bad_state
+zrzut: 40_audyt
+po wylogowaniu /tokeny -> http://localhost:5000/

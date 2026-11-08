@@ -1,0 +1,128 @@
+===== 2026-11-08 10:21:45 Krok A - authorization request (front-channel)
+HTTP 302 Location: http://localhost:8080/realms/pbksi/protocol/openid-connect/auth?response_type=code&client_id=pbksi-webapp&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fcallback&scope=openid+profile+email+roles&state=-NUGDrQJecw8XSO-4p9NDqMjqeZ1wY4B&nonce=ayYpimFQ5uLngl4DG6OIC-BqQbgYUX8P&code_challenge=UtUqaoUXmQGzn_rYJXVHGZC7wpCwchmqKVKhLJLNkmw&code_challenge_method=S256
+
+===== 2026-11-08 10:21:46 Krok D/E - authorization_code grant
+POST /realms/pbksi/protocol/openid-connect/token HTTP/1.1
+Authorization: Basic base64(pbksi-webapp:***)
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&code=4d8e1d9f-1136-af...fa7915+%28110+B%29&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fcallback&code_verifier=i7TXCyzGn4WiTIDd...tMZvBQ+%2886+B%29
+
+HTTP 200
+{
+  "access_token": "eyJhbGciOiJSUzI1...MNS-xA (1213 B)",
+  "expires_in": 120,
+  "refresh_expires_in": 21600,
+  "refresh_token": "eyJhbGciOiJIUzUx...9vpoJg (726 B)",
+  "token_type": "Bearer",
+  "id_token": "eyJhbGciOiJSUzI1...JCx4-Q (1150 B)",
+  "not-before-policy": 0,
+  "session_state": "f43bb024-f36f-59...4b37b2 (36 B)",
+  "scope": "openid profile email"
+}
+
+===== 2026-11-08 10:21:50 Krok A - authorization request (front-channel)
+HTTP 302 Location: http://localhost:8080/realms/pbksi/protocol/openid-connect/auth?response_type=code&client_id=pbksi-webapp&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fcallback&scope=openid+profile+email+roles&state=6ci4-A_tyVDzEkATV7gvn8Sk9CPAkw5_&nonce=fo8n0qcb9tJ7fVc440xs-PyQYGp97y71&code_challenge=zxwns5cqymPt46fdMl4P0GDWlcUhjH5g_7B-kOXW4sw&code_challenge_method=S256
+
+===== 2026-11-08 10:21:51 Krok A - authorization request (front-channel)
+HTTP 302 Location: http://localhost:8080/realms/pbksi/protocol/openid-connect/auth?response_type=code&client_id=pbksi-webapp&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fcallback&scope=openid+profile+email+roles&state=77X6fJlzqpmFYdHuarPf5QynWGbwZh_D&nonce=vidFwlv3tOSZx_kj4cbNygAyqj52ifKZ&code_challenge=HfnYdadGb31fX5kirK0Ip5gVCrO6G0KTDWnn_cTbAOg&code_challenge_method=S256
+
+===== 2026-11-08 10:21:51 Krok D/E - authorization_code grant
+POST /realms/pbksi/protocol/openid-connect/token HTTP/1.1
+Authorization: Basic base64(pbksi-webapp:***)
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&code=5720c61a-98ea-9c...fa7915+%28110+B%29&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fcallback&code_verifier=kStGaAtF41Wj5ZgC...qwgYDg+%2886+B%29
+
+HTTP 200
+{
+  "access_token": "eyJhbGciOiJSUzI1...Zq_01w (1157 B)",
+  "expires_in": 120,
+  "refresh_expires_in": 21600,
+  "refresh_token": "eyJhbGciOiJIUzUx...8a9yMQ (726 B)",
+  "token_type": "Bearer",
+  "id_token": "eyJhbGciOiJSUzI1...jjA8gw (1150 B)",
+  "not-before-policy": 0,
+  "session_state": "9d291687-d346-8b...51d43b (36 B)",
+  "scope": "openid profile email"
+}
+
+===== 2026-11-08 10:23:57 Refresh token grant (access token expired)
+POST /realms/pbksi/protocol/openid-connect/token HTTP/1.1
+Authorization: Basic base64(pbksi-webapp:***)
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token&refresh_token=eyJhbGciOiJIUzUx...9vpoJg+%28726+B%29
+
+HTTP 200
+{
+  "access_token": "eyJhbGciOiJSUzI1...QEXfTg (1213 B)",
+  "expires_in": 120,
+  "refresh_expires_in": 21469,
+  "refresh_token": "eyJhbGciOiJIUzUx...9IhFpg (726 B)",
+  "token_type": "Bearer",
+  "id_token": "eyJhbGciOiJSUzI1...FBIJxg (1093 B)",
+  "not-before-policy": 0,
+  "session_state": "f43bb024-f36f-59...4b37b2 (36 B)",
+  "scope": "openid profile email"
+}
+
+===== 2026-11-08 10:23:58 Refresh token grant (access token expired)
+POST /realms/pbksi/protocol/openid-connect/token HTTP/1.1
+Authorization: Basic base64(pbksi-webapp:***)
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token&refresh_token=eyJhbGciOiJIUzUx...8a9yMQ+%28726+B%29
+
+HTTP 400
+{
+  "error": "invalid_grant",
+  "error_description": "Session not active"
+}
+
+===== 2026-11-08 10:23:59 Refresh token grant (manual)
+POST /realms/pbksi/protocol/openid-connect/token HTTP/1.1
+Authorization: Basic base64(pbksi-webapp:***)
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token&refresh_token=eyJhbGciOiJIUzUx...9IhFpg+%28726+B%29
+
+HTTP 200
+{
+  "access_token": "eyJhbGciOiJSUzI1...iZ85sg (1213 B)",
+  "expires_in": 120,
+  "refresh_expires_in": 21467,
+  "refresh_token": "eyJhbGciOiJIUzUx...n7-hRw (726 B)",
+  "token_type": "Bearer",
+  "id_token": "eyJhbGciOiJSUzI1..._N7Tpg (1093 B)",
+  "not-before-policy": 0,
+  "session_state": "f43bb024-f36f-59...4b37b2 (36 B)",
+  "scope": "openid profile email"
+}
+
+===== 2026-11-08 10:23:59 Krok A - authorization request (front-channel)
+HTTP 302 Location: http://localhost:8080/realms/pbksi/protocol/openid-connect/auth?response_type=code&client_id=pbksi-webapp&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fcallback&scope=openid+profile+email+roles&state=wHQstdlQjywcy5TloEpAXURb8-RfN7WZ&nonce=SlJguApZJHMHDJxsm0KP6-7TXELjnBtj&code_challenge=JV_nBxboJWeEUuhr2F9nNTMIDgmTbESZ1Gsq5AuqboI&code_challenge_method=S256
+
+===== 2026-11-08 10:24:00 Krok D/E - authorization_code grant
+POST /realms/pbksi/protocol/openid-connect/token HTTP/1.1
+Authorization: Basic base64(pbksi-webapp:***)
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&code=eb7bf4b4-2dab-13...fa7915+%28110+B%29&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fcallback&code_verifier=Cm0x67rqjmGPqehz...-bAzSw+%2886+B%29
+
+HTTP 200
+{
+  "access_token": "eyJhbGciOiJSUzI1...3MEV6A (1189 B)",
+  "expires_in": 120,
+  "refresh_expires_in": 21600,
+  "refresh_token": "eyJhbGciOiJIUzUx...SUyHzA (726 B)",
+  "token_type": "Bearer",
+  "id_token": "eyJhbGciOiJSUzI1...J_d8Gw (1137 B)",
+  "not-before-policy": 0,
+  "session_state": "aefc1c42-39ae-77...0fb1d2 (36 B)",
+  "scope": "openid profile email"
+}
+
+===== 2026-11-08 10:24:02 Krok A - authorization request (front-channel)
+HTTP 302 Location: http://localhost:8080/realms/pbksi/protocol/openid-connect/auth?response_type=code&client_id=pbksi-webapp&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fcallback&scope=openid+profile+email+roles&state=bfFlWy34MzjoR-50ombqs0VJuwr27euW&nonce=K4m92ZsIb8G79J3UT-QhQCNANDC4eal9&code_challenge=fFZcjPVidD2fuPAGm_fSa6h48oBHsMW2-Cp9_Jg_bRo&code_challenge_method=S256
+

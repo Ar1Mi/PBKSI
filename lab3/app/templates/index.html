@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+{% if not logged %}
+  <section class="card hero">
+    <h1>Delegowanie autoryzacji w OAuth 2.0</h1>
+    <p>Aplikacja jest klientem OAuth 2.0. Nie zna Twojego hasła — logujesz się na serwerze autoryzacyjnym
+       (Keycloak), a aplikacja dostaje tylko token dostępowy o ograniczonym zakresie i czasie życia.</p>
+    {% if msg %}<p class="note">{{ msg }}</p>{% endif %}
+    <a class="btn" href="/login">Zaloguj przez Keycloak (OAuth 2.0)</a>
+    <p class="muted">Authorization Code Flow + PKCE (S256) · state · nonce</p>
+  </section>
+{% else %}
+  <section class="card">
+    <h1>Witaj, {{ me.imie_nazwisko }}</h1>
+    <table class="kv">
+      <tr><th>Login</th><td>{{ me.login }}</td></tr>
+      <tr><th>Role (RBAC)</th><td>{% for r in me.role %}<span class="role {{ r }}">{{ r }}</span>{% endfor %}</td></tr>
+      <tr><th>Uprawnienia</th><td>{% for p in me.uprawnienia %}<code>{{ p }}</code> {% endfor %}</td></tr>
+      <tr><th>Scope tokenu</th><td><code>{{ me.scope }}</code></td></tr>
+      <tr><th>Access token wygasa za</th><td><span data-countdown="{{ me.token_wygasa_za_s }}">{{ me.token_wygasa_za_s }} s</span></td></tr>
+    </table>
+  </section>
+  <section class="card">
+    <h2>Zasoby</h2>
+    <div class="grid">
+    {% for key, (path, title, perm) in resources.items() %}
+      <a class="tile {{ 'ok' if perm in perms else 'locked' }}" href="/zasob/{{ key }}">
+        <strong>{{ title }}</strong>
+        <code>GET {{ path }}</code>
+        <small>wymaga: {{ perm }} — {{ 'dostęp' if perm in perms else 'brak dostępu' }}</small>
+      </a>
+    {% endfor %}
+      <a class="tile {{ 'ok' if 'audit:read' in perms else 'locked' }}" href="/audyt">
+        <strong>Dziennik audytu</strong><code>GET /audyt</code>
+        <small>wymaga: audit:read — {{ 'dostęp' if 'audit:read' in perms else 'brak dostępu' }}</small>
+      </a>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

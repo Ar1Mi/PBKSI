@@ -1,0 +1,58 @@
+# Laboratorium 3 - OAuth 2.0
+#   keycloak - serwer autoryzacyjny (Authorization Server), http://localhost:8080
+#   app      - klient OAuth 2.0 (aplikacja webowa),       http://localhost:5000
+#   api      - serwer zasobów (Resource Server),           http://localhost:5001
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.2
+    container_name: lab3-keycloak
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://localhost:8080          # adres widziany przez przeglądarkę = "iss" w tokenach
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"     # kontenery łączą się przez http://keycloak:8080
+      KC_HEALTH_ENABLED: "true"
+      KC_LOG_LEVEL: "INFO,org.keycloak.events:DEBUG"   # zdarzenia logowania/tokenów także udane
+      TZ: Europe/Warsaw
+    volumes:
+      - ./keycloak/realm-pbksi.json:/opt/keycloak/data/import/realm-pbksi.json:ro
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  api:
+    build: ./api
+    container_name: lab3-api
+    environment:
+      OIDC_ISSUER: http://localhost:8080/realms/pbksi
+      OIDC_INTERNAL_URL: http://keycloak:8080/realms/pbksi
+      API_CLIENT_SECRET: lab3-api-secret-zmien-mnie
+    ports:
+      - "5001:5001"
+    depends_on:
+      keycloak: { condition: service_healthy }
+
+  app:
+    build: ./app
+    container_name: lab3-app
+    environment:
+      OIDC_PUBLIC_URL: http://localhost:8080/realms/pbksi
+      OIDC_INTERNAL_URL: http://keycloak:8080/realms/pbksi
+      CLIENT_ID: pbksi-webapp
+      CLIENT_SECRET: lab3-client-secret-zmien-mnie
+      APP_URL: http://localhost:5000
+      API_URL: http://api:5001
+      TOKEN_ENC_KEY: ${TOKEN_ENC_KEY:?uruchom ./run.sh albo ustaw TOKEN_ENC_KEY w .env}
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    ports:
+      - "5000:5000"
+    depends_on:
+      keycloak: { condition: service_healthy }
+      api: { condition: service_started }

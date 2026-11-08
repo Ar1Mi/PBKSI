@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ title }}</h1>
+  <p class="muted">Pobrane z serwera zasobów: <code>GET {{ path }}</code> z nagłówkiem <code>Authorization: Bearer &lt;access_token&gt;</code></p>
+  {% if name == 'oceny' %}
+    <table class="data"><tr><th>Przedmiot</th><th>Ocena</th></tr>
+    {% for o in data.oceny %}<tr><td>{{ o.przedmiot }}</td><td>{{ o.ocena }}</td></tr>{% endfor %}
+    </table>
+  {% elif name == 'uzytkownicy' %}
+    <table class="data"><tr><th>Login</th><th>Imię i nazwisko</th><th>Role</th><th>Średnia</th></tr>
+    {% for u in data.uzytkownicy %}<tr><td>{{ u.login }}</td><td>{{ u.imie_nazwisko }}</td>
+      <td>{% for r in u.role %}<span class="role {{ r }}">{{ r }}</span>{% else %}<span class="role guest">guest</span>{% endfor %}</td>
+      <td>{{ u.srednia if u.srednia is not none else '-' }}</td></tr>{% endfor %}
+    </table>
+  {% endif %}
+  <h3>Odpowiedź JSON</h3>
+  <pre>{{ raw }}</pre>
+</section>
+{% endblock %}
